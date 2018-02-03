@@ -4,3 +4,7 @@ version = "0.1.0"
 authors = ["Emilian Stankov <eminstine@gmail.com>"]
 
 [dependencies]
+vst = { git = "https://github.com/rust-dsp/rust-vst" }
+
+[lib]
+crate-type = ["dylib"]
