@@ -5,6 +5,7 @@ use vst::buffer::AudioBuffer;
 use vst::plugin::{Category, Plugin, Info, CanDo};
 use vst::event::Event;
 use vst::api::{Supported, Events};
+use std::f64::consts::PI;
 
 pub fn midi_value_to_freq(pitch: u8) -> f64 {
     const A4: i8 = 69;
@@ -12,6 +13,10 @@ pub fn midi_value_to_freq(pitch: u8) -> f64 {
 
     // There are 128 midi notes. https://en.wikipedia.org/wiki/MIDI_tuning_standard
     ((f64::from(pitch as i8 - A4)) / 12.0).exp2() * A4_FREQ
+}
+
+pub fn sine_wave(time: f64, note: u8) -> f32 {
+    (time * midi_value_to_freq(note) * 2.0 * PI).sin() as f32
 }
 
 struct Synth {
@@ -130,7 +135,21 @@ impl Plugin for Synth {
     }
 
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
+        let samples = buffer.samples();
+        let per_sample = self.time_per_sample();
 
+        for (input_buffer, output_buffer) in buffer.zip() {
+            let mut time = self.time;
+            for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
+                if let Some(current_note) = self.note {
+                    *output_sample = sine_wave(time, current_note);
+                } else {
+                    *output_sample = 0.0;
+                }
+                time += per_sample;
+            }
+        }
+        self.time += samples as f64 * per_sample;
     }
 
     fn can_do(&self, can_do: CanDo) -> Supported {
