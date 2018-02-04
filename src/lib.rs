@@ -19,6 +19,17 @@ pub fn sine_wave(time: f64, note: u8) -> f32 {
     (time * midi_value_to_freq(note) * 2.0 * PI).sin() as f32
 }
 
+pub fn saw_wave(time: f64, note: u8) -> f32 {
+    let period_time = 1.0 / midi_value_to_freq(note);
+    let t = time % period_time;
+
+    ((t / period_time) * 2.0 - 1.0) as f32
+}
+
+pub fn reversed_saw_wave(time: f64, note: u8) -> f32 {
+    -saw_wave(time, note)
+}
+
 struct Synth {
     sample_rate: f64,
     time: f64,
@@ -54,8 +65,14 @@ impl Synth {
     fn get_wave_type_text(&self) -> String {
         match self.wave_type {
             0 => "Sine".to_string(),
+            1 => "Saw".to_string(),
+            2 => "Reversed Saw".to_string(),
             _ => "".to_string()
         }
+    }
+
+    fn set_wave_type(&mut self, value: f32) {
+        self.wave_type = (value * 3.0).floor() as i32
     }
 }
 
@@ -88,14 +105,14 @@ impl Plugin for Synth {
 
     fn get_parameter(&self, index: i32) -> f32 {
         match index {
-            0 => self.wave_type as f32,
+            0 => self.wave_type as f32 / 3.0,
             _ => 0.0
         }
     }
 
     fn set_parameter(&mut self, index: i32, value: f32) {
         match index {
-            0 => self.wave_type = value as i32,
+            0 => self.set_wave_type(value),
             _ => ()
         }
     }
@@ -109,7 +126,6 @@ impl Plugin for Synth {
 
     fn get_parameter_text(&self, index: i32) -> String {
         match index {
-            // Convert to a percentage
             0 => format!("{}", self.get_wave_type_text()),
             _ => "".to_string()
         }
@@ -142,7 +158,13 @@ impl Plugin for Synth {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 if let Some(current_note) = self.note {
-                    *output_sample = sine_wave(time, current_note);
+                    match self.wave_type {
+                        0 => *output_sample = sine_wave(time, current_note),
+                        1 => *output_sample = saw_wave(time, current_note),
+                        2 => *output_sample = reversed_saw_wave(time, current_note),
+                        _ => *output_sample = sine_wave(time, current_note)
+                    }
+
                 } else {
                     *output_sample = 0.0;
                 }
