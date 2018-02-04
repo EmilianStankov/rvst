@@ -39,6 +39,10 @@ pub fn reversed_saw_wave(time: f64, note: u8) -> f32 {
     -saw_wave(time, note)
 }
 
+pub fn triangle_wave(time: f64, note: u8) -> f32 {
+    2.0 * saw_wave(time, note).abs() - 1.0
+}
+
 struct Synth {
     sample_rate: f64,
     time: f64,
@@ -78,6 +82,7 @@ impl Synth {
             1 => "Saw".to_string(),
             2 => "Reversed Saw".to_string(),
             3 => "Square".to_string(),
+            4 => "Triangle".to_string(),
             _ => "Sine".to_string()
         }
     }
@@ -95,7 +100,7 @@ impl Default for Synth {
             time: 0.0,
             note: None,
             wave_type: 0,
-            waves: 4
+            waves: 5
         }
     }
 }
@@ -175,6 +180,7 @@ impl Plugin for Synth {
                         1 => *output_sample = saw_wave(time, current_note),
                         2 => *output_sample = reversed_saw_wave(time, current_note),
                         3 => *output_sample = square_wave(time, current_note),
+                        4 => *output_sample = triangle_wave(time, current_note),
                         _ => *output_sample = sine_wave(time, current_note)
                     }
 
