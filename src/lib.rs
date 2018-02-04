@@ -13,7 +13,8 @@ struct Synth {
     note_duration: f64,
     note: Option<u8>,
     wave_type: u8,
-    waves: u8
+    waves: u8,
+    volume: f32
 }
 
 impl Synth {
@@ -64,7 +65,8 @@ impl Default for Synth {
             time: 0.0,
             note: None,
             wave_type: 0,
-            waves: 5
+            waves: 5,
+            volume: 1.0
         }
     }
 }
@@ -78,7 +80,7 @@ impl Plugin for Synth {
             category: Category::Synth,
             inputs: 2,
             outputs: 2,
-            parameters: 1,
+            parameters: 2,
             initial_delay: 0,
             ..Info::default()
         }
@@ -87,6 +89,7 @@ impl Plugin for Synth {
     fn get_parameter(&self, index: i32) -> f32 {
         match index {
             0 => self.wave_type as f32 / self.waves as f32,
+            1 => self.volume,
             _ => 0.0
         }
     }
@@ -94,6 +97,7 @@ impl Plugin for Synth {
     fn set_parameter(&mut self, index: i32, value: f32) {
         match index {
             0 => self.set_wave_type(value),
+            1 => self.volume = value,
             _ => ()
         }
     }
@@ -101,6 +105,7 @@ impl Plugin for Synth {
     fn get_parameter_name(&self, index: i32) -> String {
         match index {
             0 => "Wave Type".to_string(),
+            1 => "Volume".to_string(),
             _ => "".to_string()
         }
     }
@@ -108,6 +113,7 @@ impl Plugin for Synth {
     fn get_parameter_text(&self, index: i32) -> String {
         match index {
             0 => format!("{}", self.get_wave_type_text()),
+            1 => format!("{}%", (self.volume * 100.0).round()),
             _ => "".to_string()
         }
     }
@@ -146,8 +152,8 @@ impl Plugin for Synth {
                         3 => *output_sample = waves::square_wave(time, current_note),
                         4 => *output_sample = waves::triangle_wave(time, current_note),
                         _ => *output_sample = waves::sine_wave(time, current_note)
-                    }
-
+                    };
+                    *output_sample = *output_sample * self.volume;
                 } else {
                     *output_sample = 0.0;
                 }
