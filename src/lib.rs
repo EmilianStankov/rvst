@@ -54,10 +54,10 @@ impl Synth {
     }
 
     fn get_pan_text(&self) -> String {
-        if self.pan < 0.5 {
-            format!("{}% left", ((self.pan - 0.5) * 200.0).round().abs())
-        } else if self.pan == 0.5 {
+        if self.pan.round() == 0.0 {
             "center".to_string()
+        } else if self.pan < 0.0 {
+            format!("{}% left", (self.pan * 100.0).round().abs())
         } else {
             format!("{}% right", (self.pan * 100.0).round())
         }
@@ -78,7 +78,7 @@ impl Default for Synth {
             wave_type: 0,
             waves: 5,
             volume: 1.0,
-            pan: 0.5
+            pan: 0.0
         }
     }
 }
@@ -102,7 +102,7 @@ impl Plugin for Synth {
         match index {
             0 => self.wave_type as f32 / self.waves as f32,
             1 => self.volume,
-            2 => self.pan,
+            2 => (self.pan + 1.0) / 2.0,
             _ => 0.0
         }
     }
@@ -111,7 +111,7 @@ impl Plugin for Synth {
         match index {
             0 => self.set_wave_type(value),
             1 => self.volume = value,
-            2 => self.pan = value,
+            2 => self.pan = 2.0 * value - 1.0,
             _ => ()
         }
     }
