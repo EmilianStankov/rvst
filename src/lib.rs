@@ -15,7 +15,8 @@ struct Synth {
     wave_type: u8,
     waves: u8,
     volume: f32,
-    pan: f32
+    pan: f32,
+    pitch_bend: i16
 }
 
 impl Synth {
@@ -78,7 +79,8 @@ impl Default for Synth {
             wave_type: 0,
             waves: 5,
             volume: 1.0,
-            pan: 0.0
+            pan: 0.0,
+            pitch_bend: 0
         }
     }
 }
@@ -92,7 +94,7 @@ impl Plugin for Synth {
             category: Category::Synth,
             inputs: 2,
             outputs: 2,
-            parameters: 3,
+            parameters: 4,
             initial_delay: 0,
             ..Info::default()
         }
@@ -103,6 +105,7 @@ impl Plugin for Synth {
             0 => self.wave_type as f32 / self.waves as f32,
             1 => self.volume,
             2 => (self.pan + 1.0) / 2.0,
+            3 => (8192 + self.pitch_bend) as f32 / 16384.0,
             _ => 0.0
         }
     }
@@ -112,6 +115,7 @@ impl Plugin for Synth {
             0 => self.set_wave_type(value),
             1 => self.volume = value,
             2 => self.pan = 2.0 * value - 1.0,
+            3 => self.pitch_bend = (value * 16384.0) as i16 - 8192,
             _ => ()
         }
     }
@@ -121,6 +125,7 @@ impl Plugin for Synth {
             0 => "Wave Type".to_string(),
             1 => "Volume".to_string(),
             2 => "Pan".to_string(),
+            3 => "Pitch Bend".to_string(),
             _ => "".to_string()
         }
     }
@@ -130,6 +135,7 @@ impl Plugin for Synth {
             0 => self.get_wave_type_text(),
             1 => format!("{}%", (self.volume * 100.0).round()),
             2 => self.get_pan_text(),
+            3 => format!("{}", self.pitch_bend),
             _ => "".to_string()
         }
     }
@@ -163,12 +169,12 @@ impl Plugin for Synth {
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 if let Some(current_note) = self.note {
                     match self.wave_type {
-                        0 => *output_sample = waves::sine_wave(time, current_note),
-                        1 => *output_sample = waves::saw_wave(time, current_note),
-                        2 => *output_sample = waves::reversed_saw_wave(time, current_note),
-                        3 => *output_sample = waves::square_wave(time, current_note),
-                        4 => *output_sample = waves::triangle_wave(time, current_note),
-                        _ => *output_sample = waves::sine_wave(time, current_note)
+                        0 => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend),
+                        1 => *output_sample = waves::saw_wave(time, current_note, self.pitch_bend),
+                        2 => *output_sample = waves::reversed_saw_wave(time, current_note, self.pitch_bend),
+                        3 => *output_sample = waves::square_wave(time, current_note, self.pitch_bend),
+                        4 => *output_sample = waves::triangle_wave(time, current_note, self.pitch_bend),
+                        _ => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend)
                     };
                     *output_sample = *output_sample * self.volume;
                     if left_channel && self.pan > 0.0 {
