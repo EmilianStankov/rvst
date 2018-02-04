@@ -19,6 +19,15 @@ pub fn sine_wave(time: f64, note: u8) -> f32 {
     (time * midi_value_to_freq(note) * 2.0 * PI).sin() as f32
 }
 
+pub fn square_wave(time: f64, note: u8) -> f32 {
+    let sine = sine_wave(time, note);
+    if sine > 0.0 {
+        1.0
+    } else {
+        -1.0
+    }
+}
+
 pub fn saw_wave(time: f64, note: u8) -> f32 {
     let period_time = 1.0 / midi_value_to_freq(note);
     let t = time % period_time;
@@ -35,7 +44,8 @@ struct Synth {
     time: f64,
     note_duration: f64,
     note: Option<u8>,
-    wave_type: i32
+    wave_type: u8,
+    waves: u8
 }
 
 impl Synth {
@@ -67,12 +77,13 @@ impl Synth {
             0 => "Sine".to_string(),
             1 => "Saw".to_string(),
             2 => "Reversed Saw".to_string(),
-            _ => "".to_string()
+            3 => "Square".to_string(),
+            _ => "Sine".to_string()
         }
     }
 
     fn set_wave_type(&mut self, value: f32) {
-        self.wave_type = (value * 3.0).floor() as i32
+        self.wave_type = (value * self.waves as f32).floor() as u8
     }
 }
 
@@ -83,7 +94,8 @@ impl Default for Synth {
             note_duration: 0.0,
             time: 0.0,
             note: None,
-            wave_type: 0
+            wave_type: 0,
+            waves: 4
         }
     }
 }
@@ -105,7 +117,7 @@ impl Plugin for Synth {
 
     fn get_parameter(&self, index: i32) -> f32 {
         match index {
-            0 => self.wave_type as f32 / 3.0,
+            0 => self.wave_type as f32 / self.waves as f32,
             _ => 0.0
         }
     }
@@ -162,6 +174,7 @@ impl Plugin for Synth {
                         0 => *output_sample = sine_wave(time, current_note),
                         1 => *output_sample = saw_wave(time, current_note),
                         2 => *output_sample = reversed_saw_wave(time, current_note),
+                        3 => *output_sample = square_wave(time, current_note),
                         _ => *output_sample = sine_wave(time, current_note)
                     }
 
