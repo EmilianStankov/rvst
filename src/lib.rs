@@ -54,7 +54,7 @@ impl Synth {
     }
 
     fn get_pan_text(&self) -> String {
-        if self.pan.round() == 0.0 {
+        if self.pan < 0.01 && self.pan > -0.01 {
             "center".to_string()
         } else if self.pan < 0.0 {
             format!("{}% left", (self.pan * 100.0).round().abs())
@@ -157,6 +157,7 @@ impl Plugin for Synth {
         let samples = buffer.samples();
         let per_sample = self.time_per_sample();
 
+        let mut left_channel = true;
         for (input_buffer, output_buffer) in buffer.zip() {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
@@ -170,11 +171,17 @@ impl Plugin for Synth {
                         _ => *output_sample = waves::sine_wave(time, current_note)
                     };
                     *output_sample = *output_sample * self.volume;
+                    if left_channel && self.pan > 0.0 {
+                        *output_sample = *output_sample * (1.0 - self.pan)
+                    } else if !left_channel && self.pan < 0.0 {
+                        *output_sample = *output_sample * (-1.0 - self.pan).abs()
+                    }
                 } else {
                     *output_sample = 0.0;
                 }
                 time += per_sample;
             }
+            left_channel = false;
         }
         self.time += samples as f64 * per_sample;
     }
