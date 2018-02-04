@@ -14,7 +14,8 @@ struct Synth {
     note: Option<u8>,
     wave_type: u8,
     waves: u8,
-    volume: f32
+    volume: f32,
+    pan: f32
 }
 
 impl Synth {
@@ -52,6 +53,16 @@ impl Synth {
         }
     }
 
+    fn get_pan_text(&self) -> String {
+        if self.pan < 0.5 {
+            format!("{}% left", ((self.pan - 0.5) * 200.0).round().abs())
+        } else if self.pan == 0.5 {
+            "center".to_string()
+        } else {
+            format!("{}% right", (self.pan * 100.0).round())
+        }
+    }
+
     fn set_wave_type(&mut self, value: f32) {
         self.wave_type = (value * self.waves as f32).floor() as u8
     }
@@ -66,7 +77,8 @@ impl Default for Synth {
             note: None,
             wave_type: 0,
             waves: 5,
-            volume: 1.0
+            volume: 1.0,
+            pan: 0.5
         }
     }
 }
@@ -80,7 +92,7 @@ impl Plugin for Synth {
             category: Category::Synth,
             inputs: 2,
             outputs: 2,
-            parameters: 2,
+            parameters: 3,
             initial_delay: 0,
             ..Info::default()
         }
@@ -90,6 +102,7 @@ impl Plugin for Synth {
         match index {
             0 => self.wave_type as f32 / self.waves as f32,
             1 => self.volume,
+            2 => self.pan,
             _ => 0.0
         }
     }
@@ -98,6 +111,7 @@ impl Plugin for Synth {
         match index {
             0 => self.set_wave_type(value),
             1 => self.volume = value,
+            2 => self.pan = value,
             _ => ()
         }
     }
@@ -106,14 +120,16 @@ impl Plugin for Synth {
         match index {
             0 => "Wave Type".to_string(),
             1 => "Volume".to_string(),
+            2 => "Pan".to_string(),
             _ => "".to_string()
         }
     }
 
     fn get_parameter_text(&self, index: i32) -> String {
         match index {
-            0 => format!("{}", self.get_wave_type_text()),
+            0 => self.get_wave_type_text(),
             1 => format!("{}%", (self.volume * 100.0).round()),
+            2 => self.get_pan_text(),
             _ => "".to_string()
         }
     }
