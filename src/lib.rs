@@ -14,7 +14,7 @@ struct Synth {
     note_duration: f64,
     note: Option<u8>,
     oscillators: Vec<oscillator::Oscillator>,
-    waves: u8,
+    wave_types: u8,
     pan: f32,
     pitch_bend: i16
 }
@@ -62,7 +62,7 @@ impl Default for Synth {
             time: 0.0,
             note: None,
             oscillators: vec![Default::default()],
-            waves: 6,
+            wave_types: 6,
             pan: 0.0,
             pitch_bend: 0
         }
@@ -87,7 +87,7 @@ impl Plugin for Synth {
 
     fn get_parameter(&self, index: i32) -> f32 {
         match index {
-            0 => self.oscillators[0].get_wave_type() as f32 / self.waves as f32,
+            0 => self.oscillators[0].get_wave_type() as f32 / self.wave_types as f32,
             1 => self.oscillators[0].get_volume(),
             2 => (self.pan + 1.0) / 2.0,
             3 => (8192 + self.pitch_bend) as f32 / 16384.0,

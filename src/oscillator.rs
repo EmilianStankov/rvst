@@ -1,12 +1,12 @@
 pub struct Oscillator {
     wave_type: u8,
-    waves: u8,
+    wave_types: u8,
     volume: f32
 }
 
 impl Oscillator {
     pub fn set_wave_type(&mut self, value: f32) {
-        self.wave_type = (value * self.waves as f32).floor() as u8
+        self.wave_type = (value * self.wave_types as f32).floor() as u8
     }
 
     pub fn get_wave_type(&self) -> u8 {
@@ -38,7 +38,7 @@ impl Default for Oscillator {
     fn default() -> Oscillator {
         Oscillator {
             wave_type: 0,
-            waves: 6,
+            wave_types: 6,
             volume: 1.0
         }
     }
