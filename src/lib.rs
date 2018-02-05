@@ -16,10 +16,12 @@ struct Synth {
     oscillators: Vec<oscillator::Oscillator>,
     wave_types: u8,
     pan: f32,
-    pitch_bend: i16
+    pitch_bend: i16,
+    default_oscillator: oscillator::Oscillator
 }
 
 impl Synth {
+
     fn time_per_sample(&self) -> f64 {
         1.0 / self.sample_rate
     }
@@ -52,6 +54,20 @@ impl Synth {
             format!("{}% right", (self.pan * 100.0).round())
         }
     }
+
+    fn get_oscillator(&self, index: usize) -> &oscillator::Oscillator {
+        match self.oscillators.get(index) {
+            Some(oscillator) => oscillator,
+            None => &self.default_oscillator
+        }
+    }
+
+    fn get_oscillator_mut(&mut self, index: usize) -> &oscillator::Oscillator {
+        match self.oscillators.get_mut(index) {
+            Some(oscillator) => oscillator,
+            None => &self.default_oscillator
+        }
+    }
 }
 
 impl Default for Synth {
@@ -61,10 +77,11 @@ impl Default for Synth {
             note_duration: 0.0,
             time: 0.0,
             note: None,
-            oscillators: vec![Default::default()],
+            oscillators: vec![Default::default(), Default::default()],
             wave_types: 6,
             pan: 0.0,
-            pitch_bend: 0
+            pitch_bend: 0,
+            default_oscillator: Default::default()
         }
     }
 }
@@ -78,7 +95,7 @@ impl Plugin for Synth {
             category: Category::Synth,
             inputs: 2,
             outputs: 2,
-            parameters: 4,
+            parameters: 6,
             initial_delay: 0,
             version: 100,
             ..Info::default()
@@ -87,40 +104,49 @@ impl Plugin for Synth {
 
     fn get_parameter(&self, index: i32) -> f32 {
         match index {
-            0 => self.oscillators[0].get_wave_type() as f32 / self.wave_types as f32,
-            1 => self.oscillators[0].get_volume(),
-            2 => (self.pan + 1.0) / 2.0,
-            3 => (8192 + self.pitch_bend) as f32 / 16384.0,
+            0 => self.get_oscillator(0).get_wave_type() as f32 / self.wave_types as f32,
+            1 => self.get_oscillator(0).get_volume(),
+            2 => self.get_oscillator(1).get_wave_type() as f32 / self.wave_types as f32,
+            3 => self.get_oscillator(1).get_volume(),
+            4 => (self.pan + 1.0) / 2.0,
+            5 => (8192 + self.pitch_bend) as f32 / 16384.0,
             _ => 0.0
         }
     }
 
     fn set_parameter(&mut self, index: i32, value: f32) {
+        //TODO: Make get_oscillator_mut work
         match index {
             0 => self.oscillators[0].set_wave_type(value),
             1 => self.oscillators[0].set_volume(value),
-            2 => self.pan = 2.0 * value - 1.0,
-            3 => self.pitch_bend = (value * 16384.0) as i16 - 8192,
+            2 => self.oscillators[1].set_wave_type(value),
+            3 => self.oscillators[1].set_volume(value),
+            4 => self.pan = 2.0 * value - 1.0,
+            5 => self.pitch_bend = (value * 16384.0) as i16 - 8192,
             _ => ()
         }
     }
 
     fn get_parameter_name(&self, index: i32) -> String {
         match index {
-            0 => "Wave Type".to_string(),
-            1 => "Volume".to_string(),
-            2 => "Pan".to_string(),
-            3 => "Pitch Bend".to_string(),
+            0 => "Osc 1".to_string(),
+            1 => "Osc 1 Volume".to_string(),
+            2 => "Osc 2".to_string(),
+            3 => "Osc 2 Volume".to_string(),
+            4 => "Pan".to_string(),
+            5 => "Pitch Bend".to_string(),
             _ => "".to_string()
         }
     }
 
     fn get_parameter_text(&self, index: i32) -> String {
         match index {
-            0 => self.oscillators[0].get_wave_type_text(),
-            1 => format!("{}%", (self.oscillators[0].get_volume() * 100.0).round()),
-            2 => self.get_pan_text(),
-            3 => format!("{}", self.pitch_bend),
+            0 => self.get_oscillator(0).get_wave_type_text(),
+            1 => format!("{}%", (self.get_oscillator(0).get_volume() * 100.0).round()),
+            2 => self.get_oscillator(1).get_wave_type_text(),
+            3 => format!("{}%", (self.get_oscillator(1).get_volume() * 100.0).round()),
+            4 => self.get_pan_text(),
+            5 => format!("{}", self.pitch_bend),
             _ => "".to_string()
         }
     }
@@ -153,8 +179,11 @@ impl Plugin for Synth {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 if let Some(current_note) = self.note {
-                    *output_sample = self.oscillators[0].get_wave_value(time, current_note, self.pitch_bend);
-                    *output_sample = *output_sample * self.oscillators[0].get_volume();
+                    for oscillator in self.oscillators.iter() {
+                        *output_sample += oscillator.get_wave_value(time, current_note, self.pitch_bend);
+                        *output_sample = *output_sample * oscillator.get_volume();
+                        *output_sample = *output_sample * (1.0 / self.oscillators.len() as f32);
+                    }
                     if left_channel && self.pan > 0.0 {
                         *output_sample = *output_sample * (1.0 - self.pan)
                     } else if !left_channel && self.pan < 0.0 {
