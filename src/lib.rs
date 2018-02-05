@@ -5,6 +5,7 @@ use vst::buffer::AudioBuffer;
 use vst::plugin::{Category, Plugin, Info, CanDo};
 use vst::event::Event;
 use vst::api::{Supported, Events};
+mod oscillator;
 mod waves;
 
 struct Synth {
@@ -12,9 +13,8 @@ struct Synth {
     time: f64,
     note_duration: f64,
     note: Option<u8>,
-    wave_type: u8,
+    oscillators: Vec<oscillator::Oscillator>,
     waves: u8,
-    volume: f32,
     pan: f32,
     pitch_bend: i16
 }
@@ -43,18 +43,6 @@ impl Synth {
         }
     }
 
-    fn get_wave_type_text(&self) -> String {
-        match self.wave_type {
-            0 => "Sine".to_string(),
-            1 => "Saw".to_string(),
-            2 => "Reversed Saw".to_string(),
-            3 => "Square".to_string(),
-            4 => "Triangle".to_string(),
-            5 => "Sine Rounded".to_string(),
-            _ => "Sine".to_string()
-        }
-    }
-
     fn get_pan_text(&self) -> String {
         if self.pan < 0.01 && self.pan > -0.01 {
             "center".to_string()
@@ -63,10 +51,6 @@ impl Synth {
         } else {
             format!("{}% right", (self.pan * 100.0).round())
         }
-    }
-
-    fn set_wave_type(&mut self, value: f32) {
-        self.wave_type = (value * self.waves as f32).floor() as u8
     }
 }
 
@@ -77,9 +61,8 @@ impl Default for Synth {
             note_duration: 0.0,
             time: 0.0,
             note: None,
-            wave_type: 0,
+            oscillators: vec![Default::default()],
             waves: 6,
-            volume: 1.0,
             pan: 0.0,
             pitch_bend: 0
         }
@@ -104,8 +87,8 @@ impl Plugin for Synth {
 
     fn get_parameter(&self, index: i32) -> f32 {
         match index {
-            0 => self.wave_type as f32 / self.waves as f32,
-            1 => self.volume,
+            0 => self.oscillators[0].get_wave_type() as f32 / self.waves as f32,
+            1 => self.oscillators[0].get_volume(),
             2 => (self.pan + 1.0) / 2.0,
             3 => (8192 + self.pitch_bend) as f32 / 16384.0,
             _ => 0.0
@@ -114,8 +97,8 @@ impl Plugin for Synth {
 
     fn set_parameter(&mut self, index: i32, value: f32) {
         match index {
-            0 => self.set_wave_type(value),
-            1 => self.volume = value,
+            0 => self.oscillators[0].set_wave_type(value),
+            1 => self.oscillators[0].set_volume(value),
             2 => self.pan = 2.0 * value - 1.0,
             3 => self.pitch_bend = (value * 16384.0) as i16 - 8192,
             _ => ()
@@ -134,8 +117,8 @@ impl Plugin for Synth {
 
     fn get_parameter_text(&self, index: i32) -> String {
         match index {
-            0 => self.get_wave_type_text(),
-            1 => format!("{}%", (self.volume * 100.0).round()),
+            0 => self.oscillators[0].get_wave_type_text(),
+            1 => format!("{}%", (self.oscillators[0].get_volume() * 100.0).round()),
             2 => self.get_pan_text(),
             3 => format!("{}", self.pitch_bend),
             _ => "".to_string()
@@ -170,7 +153,7 @@ impl Plugin for Synth {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 if let Some(current_note) = self.note {
-                    match self.wave_type {
+                    match self.oscillators[0].get_wave_type() {
                         0 => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend),
                         1 => *output_sample = waves::saw_wave(time, current_note, self.pitch_bend),
                         2 => *output_sample = waves::reversed_saw_wave(time, current_note, self.pitch_bend),
@@ -179,7 +162,7 @@ impl Plugin for Synth {
                         5 => *output_sample = waves::round_sine(time, current_note, self.pitch_bend),
                         _ => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend)
                     };
-                    *output_sample = *output_sample * self.volume;
+                    *output_sample = *output_sample * self.oscillators[0].get_volume();
                     if left_channel && self.pan > 0.0 {
                         *output_sample = *output_sample * (1.0 - self.pan)
                     } else if !left_channel && self.pan < 0.0 {
