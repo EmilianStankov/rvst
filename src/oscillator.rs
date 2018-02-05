@@ -1,3 +1,5 @@
+use waves;
+
 pub struct Oscillator {
     wave_type: u8,
     wave_types: u8,
@@ -11,6 +13,18 @@ impl Oscillator {
 
     pub fn get_wave_type(&self) -> u8 {
         self.wave_type
+    }
+
+    pub fn get_wave_value(&self, time: f64, note: u8, pitch_bend: i16) -> f32 {
+        match self.get_wave_type() {
+            0 => waves::sine_wave(time, note, pitch_bend),
+            1 => waves::saw_wave(time, note, pitch_bend),
+            2 => waves::reversed_saw_wave(time, note, pitch_bend),
+            3 => waves::square_wave(time, note, pitch_bend),
+            4 => waves::triangle_wave(time, note, pitch_bend),
+            5 => waves::round_sine(time, note, pitch_bend),
+            _ => waves::sine_wave(time, note, pitch_bend)
+        }
     }
 
     pub fn get_wave_type_text(&self) -> String {

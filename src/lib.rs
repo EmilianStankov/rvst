@@ -153,15 +153,7 @@ impl Plugin for Synth {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 if let Some(current_note) = self.note {
-                    match self.oscillators[0].get_wave_type() {
-                        0 => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend),
-                        1 => *output_sample = waves::saw_wave(time, current_note, self.pitch_bend),
-                        2 => *output_sample = waves::reversed_saw_wave(time, current_note, self.pitch_bend),
-                        3 => *output_sample = waves::square_wave(time, current_note, self.pitch_bend),
-                        4 => *output_sample = waves::triangle_wave(time, current_note, self.pitch_bend),
-                        5 => *output_sample = waves::round_sine(time, current_note, self.pitch_bend),
-                        _ => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend)
-                    };
+                    *output_sample = self.oscillators[0].get_wave_value(time, current_note, self.pitch_bend);
                     *output_sample = *output_sample * self.oscillators[0].get_volume();
                     if left_channel && self.pan > 0.0 {
                         *output_sample = *output_sample * (1.0 - self.pan)
