@@ -42,3 +42,7 @@ pub fn reversed_saw_wave(time: f64, note: u8, pitch_bend: i16) -> f32 {
 pub fn triangle_wave(time: f64, note: u8, pitch_bend: i16) -> f32 {
     2.0 * saw_wave(time, note, pitch_bend).abs() - 1.0
 }
+
+pub fn round_sine(time: f64, note: u8, pitch_bend: i16) -> f32 {
+    sine_wave(time, note, pitch_bend).round()
+}

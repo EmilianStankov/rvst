@@ -50,6 +50,7 @@ impl Synth {
             2 => "Reversed Saw".to_string(),
             3 => "Square".to_string(),
             4 => "Triangle".to_string(),
+            5 => "Sine Rounded".to_string(),
             _ => "Sine".to_string()
         }
     }
@@ -77,7 +78,7 @@ impl Default for Synth {
             time: 0.0,
             note: None,
             wave_type: 0,
-            waves: 5,
+            waves: 6,
             volume: 1.0,
             pan: 0.0,
             pitch_bend: 0
@@ -175,6 +176,7 @@ impl Plugin for Synth {
                         2 => *output_sample = waves::reversed_saw_wave(time, current_note, self.pitch_bend),
                         3 => *output_sample = waves::square_wave(time, current_note, self.pitch_bend),
                         4 => *output_sample = waves::triangle_wave(time, current_note, self.pitch_bend),
+                        5 => *output_sample = waves::round_sine(time, current_note, self.pitch_bend),
                         _ => *output_sample = waves::sine_wave(time, current_note, self.pitch_bend)
                     };
                     *output_sample = *output_sample * self.volume;
