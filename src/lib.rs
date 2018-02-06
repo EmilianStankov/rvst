@@ -175,8 +175,7 @@ impl Plugin for Synth {
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 for current_note in &self.notes {
                     for oscillator in self.oscillators.iter() {
-                        *output_sample += oscillator.get_wave_value(time, *current_note, self.pitch_bend);
-                        *output_sample = *output_sample * oscillator.get_volume();
+                        *output_sample += oscillator.get_wave_value(time, *current_note, self.pitch_bend) * oscillator.get_volume();
                         *output_sample = *output_sample * (1.0 / self.oscillators.len() as f32);
                     }
                     if left_channel && self.pan > 0.0 {
