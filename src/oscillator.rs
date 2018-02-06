@@ -23,6 +23,7 @@ impl Oscillator {
             3 => waves::square_wave(time, note, pitch_bend),
             4 => waves::triangle_wave(time, note, pitch_bend),
             5 => waves::round_sine(time, note, pitch_bend),
+            6 => waves::noise(),
             _ => waves::sine_wave(time, note, pitch_bend)
         }
     }
@@ -35,6 +36,7 @@ impl Oscillator {
             3 => "Square".to_string(),
             4 => "Triangle".to_string(),
             5 => "Sine Rounded".to_string(),
+            6 => "Noise".to_string(),
             _ => "Sine".to_string()
         }
     }
@@ -52,7 +54,7 @@ impl Default for Oscillator {
     fn default() -> Oscillator {
         Oscillator {
             wave_type: 0,
-            wave_types: 6,
+            wave_types: 7,
             volume: 1.0
         }
     }

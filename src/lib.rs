@@ -78,7 +78,7 @@ impl Default for Synth {
             time: 0.0,
             note: None,
             oscillators: vec![Default::default(), Default::default()],
-            wave_types: 6,
+            wave_types: 7,
             pan: 0.0,
             pitch_bend: 0,
             default_oscillator: Default::default()

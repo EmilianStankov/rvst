@@ -1,3 +1,4 @@
+extern crate rand;
 use std::f64::consts::PI;
 
 pub fn midi_value_to_freq(pitch: u8, pitch_bend: i16) -> f64 {
@@ -45,4 +46,8 @@ pub fn triangle_wave(time: f64, note: u8, pitch_bend: i16) -> f32 {
 
 pub fn round_sine(time: f64, note: u8, pitch_bend: i16) -> f32 {
     sine_wave(time, note, pitch_bend).round()
+}
+
+pub fn noise() -> f32 {
+    rand::random::<f32>() * 2.0 - 1.0
 }
