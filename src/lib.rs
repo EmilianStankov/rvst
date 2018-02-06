@@ -92,7 +92,7 @@ impl Plugin for Synth {
             outputs: 2,
             parameters: 6,
             initial_delay: 0,
-            version: 100,
+            version: 250,
             ..Info::default()
         }
     }
