@@ -11,8 +11,7 @@ mod waves;
 struct Synth {
     sample_rate: f64,
     time: f64,
-    note_duration: f64,
-    note: Option<u8>,
+    notes: Vec<u8>,
     oscillators: Vec<oscillator::Oscillator>,
     wave_types: u8,
     pan: f32,
@@ -35,14 +34,11 @@ impl Synth {
     }
 
     fn note_on(&mut self, note: u8) {
-        self.note_duration = 0.0;
-        self.note = Some(note)
+        self.notes.push(note)
     }
 
     fn note_off(&mut self, note: u8) {
-        if self.note == Some(note) {
-            self.note = None
-        }
+        self.notes.iter().position(|&n| n == note).map(|n| self.notes.remove(n));
     }
 
     fn get_pan_text(&self) -> String {
@@ -74,9 +70,8 @@ impl Default for Synth {
     fn default() -> Synth {
         Synth {
             sample_rate: 44100.0,
-            note_duration: 0.0,
             time: 0.0,
-            note: None,
+            notes: vec![],
             oscillators: vec![Default::default(), Default::default()],
             wave_types: 7,
             pan: 0.0,
@@ -178,9 +173,9 @@ impl Plugin for Synth {
         for (input_buffer, output_buffer) in buffer.zip() {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
-                if let Some(current_note) = self.note {
+                for current_note in &self.notes {
                     for oscillator in self.oscillators.iter() {
-                        *output_sample += oscillator.get_wave_value(time, current_note, self.pitch_bend);
+                        *output_sample += oscillator.get_wave_value(time, *current_note, self.pitch_bend);
                         *output_sample = *output_sample * oscillator.get_volume();
                         *output_sample = *output_sample * (1.0 / self.oscillators.len() as f32);
                     }
@@ -189,8 +184,6 @@ impl Plugin for Synth {
                     } else if !left_channel && self.pan < 0.0 {
                         *output_sample = *output_sample * (-1.0 - self.pan).abs()
                     }
-                } else {
-                    *output_sample = 0.0;
                 }
                 time += per_sample;
             }
