@@ -2,9 +2,9 @@
 extern crate vst;
 
 use vst::buffer::AudioBuffer;
-use vst::plugin::{Category, Plugin, Info, CanDo};
+use vst::plugin::{CanDo, Category, Info, Plugin};
 use vst::event::Event;
-use vst::api::{Supported, Events};
+use vst::api::{Events, Supported};
 mod oscillator;
 mod waves;
 
@@ -16,11 +16,10 @@ struct Synth {
     wave_types: u8,
     pan: f32,
     pitch_bend: i16,
-    default_oscillator: oscillator::Oscillator
+    default_oscillator: oscillator::Oscillator,
 }
 
 impl Synth {
-
     fn time_per_sample(&self) -> f64 {
         1.0 / self.sample_rate
     }
@@ -29,7 +28,7 @@ impl Synth {
         match data[0] {
             128 => self.note_off(data[1]),
             144 => self.note_on(data[1]),
-            _ => ()
+            _ => (),
         }
     }
 
@@ -38,7 +37,10 @@ impl Synth {
     }
 
     fn note_off(&mut self, note: u8) {
-        self.notes.iter().position(|&n| n == note).map(|n| self.notes.remove(n));
+        self.notes
+            .iter()
+            .position(|&n| n == note)
+            .map(|n| self.notes.remove(n));
     }
 
     fn get_pan_text(&self) -> String {
@@ -54,14 +56,14 @@ impl Synth {
     fn get_oscillator(&self, index: usize) -> &oscillator::Oscillator {
         match self.oscillators.get(index) {
             Some(oscillator) => oscillator,
-            None => &self.default_oscillator
+            None => &self.default_oscillator,
         }
     }
 
     fn get_oscillator_mut(&mut self, index: usize) -> &oscillator::Oscillator {
         match self.oscillators.get_mut(index) {
             Some(oscillator) => oscillator,
-            None => &self.default_oscillator
+            None => &self.default_oscillator,
         }
     }
 }
@@ -76,7 +78,7 @@ impl Default for Synth {
             wave_types: 7,
             pan: 0.0,
             pitch_bend: 0,
-            default_oscillator: Default::default()
+            default_oscillator: Default::default(),
         }
     }
 }
@@ -105,7 +107,7 @@ impl Plugin for Synth {
             3 => self.get_oscillator(1).get_volume(),
             4 => (self.pan + 1.0) / 2.0,
             5 => (8192 + self.pitch_bend) as f32 / 16384.0,
-            _ => 0.0
+            _ => 0.0,
         }
     }
 
@@ -118,7 +120,7 @@ impl Plugin for Synth {
             3 => self.oscillators[1].set_volume(value),
             4 => self.pan = 2.0 * value - 1.0,
             5 => self.pitch_bend = (value * 16384.0) as i16 - 8192,
-            _ => ()
+            _ => (),
         }
     }
 
@@ -130,7 +132,7 @@ impl Plugin for Synth {
             3 => "Osc 2 Volume".to_string(),
             4 => "Pan".to_string(),
             5 => "Pitch Bend".to_string(),
-            _ => "".to_string()
+            _ => "".to_string(),
         }
     }
 
@@ -142,13 +144,13 @@ impl Plugin for Synth {
             3 => format!("{}%", (self.get_oscillator(1).get_volume() * 100.0).round()),
             4 => self.get_pan_text(),
             5 => format!("{}", self.pitch_bend),
-            _ => "".to_string()
+            _ => "".to_string(),
         }
     }
 
     fn get_parameter_label(&self, index: i32) -> String {
         match index {
-            _ => "".to_string()
+            _ => "".to_string(),
         }
     }
 
@@ -156,7 +158,7 @@ impl Plugin for Synth {
         for event in events.events() {
             match event {
                 Event::Midi(ev) => self.process_midi_event(ev.data),
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -175,7 +177,9 @@ impl Plugin for Synth {
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 for current_note in &self.notes {
                     for oscillator in self.oscillators.iter() {
-                        *output_sample += oscillator.get_wave_value(time, *current_note, self.pitch_bend) * oscillator.get_volume();
+                        *output_sample +=
+                            oscillator.get_wave_value(time, *current_note, self.pitch_bend)
+                                * oscillator.get_volume();
                         *output_sample = *output_sample * (1.0 / self.oscillators.len() as f32);
                     }
                     if left_channel && self.pan > 0.0 {
@@ -194,7 +198,7 @@ impl Plugin for Synth {
     fn can_do(&self, can_do: CanDo) -> Supported {
         match can_do {
             CanDo::ReceiveMidiEvent => Supported::Yes,
-            _ => Supported::Maybe
+            _ => Supported::Maybe,
         }
     }
 }

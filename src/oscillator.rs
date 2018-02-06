@@ -3,7 +3,7 @@ use waves;
 pub struct Oscillator {
     wave_type: u8,
     wave_types: u8,
-    volume: f32
+    volume: f32,
 }
 
 impl Oscillator {
@@ -24,7 +24,7 @@ impl Oscillator {
             4 => waves::triangle_wave(time, note, pitch_bend),
             5 => waves::round_sine(time, note, pitch_bend),
             6 => waves::noise(),
-            _ => waves::sine_wave(time, note, pitch_bend)
+            _ => waves::sine_wave(time, note, pitch_bend),
         }
     }
 
@@ -37,7 +37,7 @@ impl Oscillator {
             4 => "Triangle".to_string(),
             5 => "Sine Rounded".to_string(),
             6 => "Noise".to_string(),
-            _ => "Sine".to_string()
+            _ => "Sine".to_string(),
         }
     }
 
@@ -55,7 +55,7 @@ impl Default for Oscillator {
         Oscillator {
             wave_type: 0,
             wave_types: 7,
-            volume: 1.0
+            volume: 1.0,
         }
     }
 }
