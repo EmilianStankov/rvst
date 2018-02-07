@@ -15,6 +15,7 @@ struct Synth {
     oscillators: Vec<oscillator::Oscillator>,
     wave_types: u8,
     pan: f32,
+    attack: f64,
     default_oscillator: oscillator::Oscillator,
 }
 
@@ -76,6 +77,7 @@ impl Default for Synth {
             oscillators: vec![Default::default(), Default::default(), Default::default()],
             wave_types: 7,
             pan: 0.0,
+            attack: 0.0,
             default_oscillator: Default::default(),
         }
     }
@@ -90,7 +92,7 @@ impl Plugin for Synth {
             category: Category::Synth,
             inputs: 2,
             outputs: 2,
-            parameters: 10,
+            parameters: 11,
             initial_delay: 0,
             version: 250,
             ..Info::default()
@@ -109,6 +111,7 @@ impl Plugin for Synth {
             7 => self.get_oscillator(2).get_volume(),
             8 => (8192 + self.get_oscillator(2).get_pitch_bend()) as f32 / 16384.0,
             9 => (self.pan + 1.0) / 2.0,
+            10 => self.attack as f32 / 10.0,
             _ => 0.0,
         }
     }
@@ -126,6 +129,7 @@ impl Plugin for Synth {
             7 => self.oscillators[2].set_volume(value),
             8 => self.oscillators[2].set_pitch_bend((value * 16384.0) as i16 - 8192),
             9 => self.pan = 2.0 * value - 1.0,
+            10 => self.attack = (10.0 * value) as f64,
             _ => (),
         }
     }
@@ -142,6 +146,7 @@ impl Plugin for Synth {
             7 => "Osc 3 Volume".to_string(),
             8 => "Osc 3 Pitch".to_string(),
             9 => "Pan".to_string(),
+            10 => "Attack".to_string(),
             _ => "".to_string(),
         }
     }
@@ -158,6 +163,7 @@ impl Plugin for Synth {
             7 => format!("{}%", (self.get_oscillator(2).get_volume() * 100.0).round()),
             8 => format!("{}", self.get_oscillator(2).get_pitch_bend()),
             9 => self.get_pan_text(),
+            10 => format!("{}ms", (self.attack * 1000.0) as u16),
             _ => "".to_string(),
         }
     }
@@ -187,6 +193,9 @@ impl Plugin for Synth {
 
         let mut left_channel = true;
         for (input_buffer, output_buffer) in buffer.zip() {
+            if self.notes.len() < 1 {
+                self.time = 0.0;
+            }
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
                 for oscillator in self.oscillators.iter() {
@@ -202,6 +211,12 @@ impl Plugin for Synth {
                         *output_sample = *output_sample * (-1.0 - self.pan).abs()
                     }
                 }
+                let alpha = if time < self.attack {
+                    time / self.attack
+                } else {
+                    1.0
+                };
+                *output_sample = *output_sample * alpha as f32;
                 time += per_sample;
             }
             left_channel = false;
