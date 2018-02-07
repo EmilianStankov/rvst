@@ -4,6 +4,7 @@ pub struct Oscillator {
     wave_type: u8,
     wave_types: u8,
     volume: f32,
+    pitch_bend: i16,
 }
 
 impl Oscillator {
@@ -15,16 +16,16 @@ impl Oscillator {
         self.wave_type
     }
 
-    pub fn get_wave_value(&self, time: f64, note: u8, pitch_bend: i16) -> f32 {
+    pub fn get_wave_value(&self, time: f64, note: u8) -> f32 {
         match self.get_wave_type() {
-            0 => waves::sine_wave(time, note, pitch_bend),
-            1 => waves::saw_wave(time, note, pitch_bend),
-            2 => waves::reversed_saw_wave(time, note, pitch_bend),
-            3 => waves::square_wave(time, note, pitch_bend),
-            4 => waves::triangle_wave(time, note, pitch_bend),
-            5 => waves::round_sine(time, note, pitch_bend),
+            0 => waves::sine_wave(time, note, self.get_pitch_bend()),
+            1 => waves::saw_wave(time, note, self.get_pitch_bend()),
+            2 => waves::reversed_saw_wave(time, note, self.get_pitch_bend()),
+            3 => waves::square_wave(time, note, self.get_pitch_bend()),
+            4 => waves::triangle_wave(time, note, self.get_pitch_bend()),
+            5 => waves::round_sine(time, note, self.get_pitch_bend()),
             6 => waves::noise(),
-            _ => waves::sine_wave(time, note, pitch_bend),
+            _ => waves::sine_wave(time, note, self.get_pitch_bend()),
         }
     }
 
@@ -48,6 +49,14 @@ impl Oscillator {
     pub fn get_volume(&self) -> f32 {
         self.volume
     }
+
+    pub fn set_pitch_bend(&mut self, value: i16) {
+        self.pitch_bend = value;
+    }
+
+    pub fn get_pitch_bend(&self) -> i16 {
+        self.pitch_bend
+    }
 }
 
 impl Default for Oscillator {
@@ -56,6 +65,7 @@ impl Default for Oscillator {
             wave_type: 0,
             wave_types: 7,
             volume: 1.0,
+            pitch_bend: 0,
         }
     }
 }
