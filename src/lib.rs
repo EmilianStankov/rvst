@@ -189,8 +189,8 @@ impl Plugin for Synth {
         for (input_buffer, output_buffer) in buffer.zip() {
             let mut time = self.time;
             for (_, output_sample) in input_buffer.iter().zip(output_buffer) {
-                for current_note in &self.notes {
-                    for oscillator in self.oscillators.iter() {
+                for oscillator in self.oscillators.iter() {
+                    for current_note in &self.notes {
                         *output_sample +=
                             oscillator.get_wave_value(time, *current_note)
                                 * oscillator.get_volume();
