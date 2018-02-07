@@ -94,7 +94,7 @@ impl Plugin for Synth {
             outputs: 2,
             parameters: 11,
             initial_delay: 0,
-            version: 250,
+            version: 300,
             ..Info::default()
         }
     }
