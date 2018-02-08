@@ -60,11 +60,12 @@ impl Synth {
         }
     }
 
-    fn get_oscillator_mut(&mut self, index: usize) -> &oscillator::Oscillator {
-        match self.oscillators.get_mut(index) {
-            Some(oscillator) => oscillator,
-            None => &self.default_oscillator,
-        }
+    fn get_oscillators(&mut self) -> &mut Vec<oscillator::Oscillator> {
+        &mut self.oscillators
+    }
+
+    fn get_oscillator_mut(&mut self, index: usize) -> Option<&mut oscillator::Oscillator> {
+        self.get_oscillators().get_mut(index)
     }
 
     fn apply_attack(&self, sample: f32, time: f64) -> f32 {
@@ -94,6 +95,24 @@ impl Synth {
             }
         }
         sample
+    }
+
+    fn set_wave_type(&mut self, osc_index: usize, value: f32) {
+        self.get_oscillator_mut(osc_index)
+            .unwrap_or(&mut oscillator::Oscillator::default())
+            .set_wave_type(value)
+    }
+
+    fn set_volume(&mut self, osc_index: usize, value: f32) {
+        self.get_oscillator_mut(osc_index)
+            .unwrap_or(&mut oscillator::Oscillator::default())
+            .set_volume(value)
+    }
+
+    fn set_pitch_bend(&mut self, osc_index: usize, value: f32) {
+        self.get_oscillator_mut(osc_index)
+            .unwrap_or(&mut oscillator::Oscillator::default())
+            .set_pitch_bend((value * 16384.0) as i16 - 8192)
     }
 }
 
@@ -146,17 +165,16 @@ impl Plugin for Synth {
     }
 
     fn set_parameter(&mut self, index: i32, value: f32) {
-        //TODO: Make get_oscillator_mut work
         match index {
-            0 => self.oscillators[0].set_wave_type(value),
-            1 => self.oscillators[0].set_volume(value),
-            2 => self.oscillators[0].set_pitch_bend((value * 16384.0) as i16 - 8192),
-            3 => self.oscillators[1].set_wave_type(value),
-            4 => self.oscillators[1].set_volume(value),
-            5 => self.oscillators[1].set_pitch_bend((value * 16384.0) as i16 - 8192),
-            6 => self.oscillators[2].set_wave_type(value),
-            7 => self.oscillators[2].set_volume(value),
-            8 => self.oscillators[2].set_pitch_bend((value * 16384.0) as i16 - 8192),
+            0 => self.set_wave_type(0, value),
+            1 => self.set_volume(0, value),
+            2 => self.set_pitch_bend(0, value),
+            3 => self.set_wave_type(1, value),
+            4 => self.set_volume(1, value),
+            5 => self.set_pitch_bend(1, value),
+            6 => self.set_wave_type(2, value),
+            7 => self.set_volume(2, value),
+            8 => self.set_pitch_bend(2, value),
             9 => self.pan = 2.0 * value - 1.0,
             10 => self.attack = (10.0 * value) as f64,
             _ => (),
