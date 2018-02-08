@@ -66,6 +66,15 @@ impl Synth {
             None => &self.default_oscillator,
         }
     }
+
+    fn apply_attack(&self, time: f64, sample: f32) -> f32{
+        let alpha = if time < self.attack {
+            time / self.attack
+        } else {
+            1.0
+        };
+        sample * alpha as f32
+    }
 }
 
 impl Default for Synth {
@@ -211,12 +220,7 @@ impl Plugin for Synth {
                         *output_sample = *output_sample * (-1.0 - self.pan).abs()
                     }
                 }
-                let alpha = if time < self.attack {
-                    time / self.attack
-                } else {
-                    1.0
-                };
-                *output_sample = *output_sample * alpha as f32;
+                *output_sample = self.apply_attack(time, *output_sample);
                 time += per_sample;
             }
             left_channel = false;
