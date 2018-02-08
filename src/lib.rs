@@ -7,11 +7,12 @@ use vst::event::Event;
 use vst::api::{Events, Supported};
 mod oscillator;
 mod waves;
+mod note;
 
 struct Synth {
     sample_rate: f64,
     time: f64,
-    notes: Vec<u8>,
+    notes: Vec<note::Note>,
     oscillators: Vec<oscillator::Oscillator>,
     wave_types: u8,
     pan: f32,
@@ -26,20 +27,20 @@ impl Synth {
 
     fn process_midi_event(&mut self, data: [u8; 3]) {
         match data[0] {
-            128 => self.note_off(data[1]),
-            144 => self.note_on(data[1]),
+            128 => self.note_off(note::Note::new(data[1], 0)),
+            144 => self.note_on(note::Note::new(data[1], data[2])),
             _ => (),
         }
     }
 
-    fn note_on(&mut self, note: u8) {
+    fn note_on(&mut self, note: note::Note) {
         self.notes.push(note)
     }
 
-    fn note_off(&mut self, note: u8) {
+    fn note_off(&mut self, note: note::Note) {
         self.notes
             .iter()
-            .position(|&n| n == note)
+            .position(|n| n == &note)
             .map(|n| self.notes.remove(n));
     }
 
@@ -90,7 +91,7 @@ impl Synth {
     fn get_wave_value(&self, mut sample: f32, time: f64) -> f32 {
         for oscillator in self.oscillators.iter() {
             for current_note in &self.notes {
-                sample += oscillator.get_wave_value(time, *current_note) * oscillator.get_volume();
+                sample += oscillator.get_wave_value(time, current_note.get_pitch()) * oscillator.get_volume();
                 sample = sample * (1.0 / self.oscillators.len() as f32);
             }
         }
