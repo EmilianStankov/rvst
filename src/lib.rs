@@ -67,7 +67,7 @@ impl Synth {
         }
     }
 
-    fn apply_attack(&self, sample: f32, time: f64) -> f32{
+    fn apply_attack(&self, sample: f32, time: f64) -> f32 {
         let alpha = if time < self.attack {
             time / self.attack
         } else {
@@ -89,9 +89,7 @@ impl Synth {
     fn get_wave_value(&self, mut sample: f32, time: f64) -> f32 {
         for oscillator in self.oscillators.iter() {
             for current_note in &self.notes {
-                sample +=
-                    oscillator.get_wave_value(time, *current_note)
-                        * oscillator.get_volume();
+                sample += oscillator.get_wave_value(time, *current_note) * oscillator.get_volume();
                 sample = sample * (1.0 / self.oscillators.len() as f32);
             }
         }
