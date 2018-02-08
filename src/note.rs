@@ -5,7 +5,10 @@ pub struct Note {
 
 impl Note {
     pub fn new(pitch: u8, velocity: u8) -> Note {
-        Note{pitch: pitch, velocity: velocity}
+        Note {
+            pitch: pitch,
+            velocity: velocity,
+        }
     }
 
     pub fn get_pitch(&self) -> u8 {
