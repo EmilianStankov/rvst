@@ -75,6 +75,16 @@ impl Synth {
         };
         sample * alpha as f32
     }
+
+    fn pan(&self, sample: f32, left_channel: bool) -> f32 {
+        if left_channel && self.pan > 0.0 {
+            sample * (1.0 - self.pan)
+        } else if !left_channel && self.pan < 0.0 {
+            sample * (-1.0 - self.pan).abs()
+        } else {
+            sample
+        }
+    }
 }
 
 impl Default for Synth {
@@ -214,12 +224,8 @@ impl Plugin for Synth {
                                 * oscillator.get_volume();
                         *output_sample = *output_sample * (1.0 / self.oscillators.len() as f32);
                     }
-                    if left_channel && self.pan > 0.0 {
-                        *output_sample = *output_sample * (1.0 - self.pan)
-                    } else if !left_channel && self.pan < 0.0 {
-                        *output_sample = *output_sample * (-1.0 - self.pan).abs()
-                    }
                 }
+                *output_sample = self.pan(*output_sample, left_channel);
                 *output_sample = self.apply_attack(time, *output_sample);
                 time += per_sample;
             }
