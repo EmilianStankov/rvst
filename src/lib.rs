@@ -17,6 +17,7 @@ struct Synth {
     wave_types: u8,
     pan: f32,
     attack: f64,
+    decay: f64,
     default_oscillator: oscillator::Oscillator,
 }
 
@@ -78,6 +79,15 @@ impl Synth {
         sample * alpha as f32
     }
 
+    fn apply_decay(&self, sample: f32, time: f64) -> f32 {
+        let alpha = if time > self.decay {
+            time / self.decay
+        } else {
+            1.0
+        };
+        sample / alpha as f32
+    }
+
     fn pan(&self, sample: f32, left_channel: bool) -> f32 {
         if left_channel && self.pan > 0.0 {
             sample * (1.0 - self.pan)
@@ -129,6 +139,7 @@ impl Default for Synth {
             wave_types: 7,
             pan: 0.0,
             attack: 0.0,
+            decay: 0.0,
             default_oscillator: Default::default(),
         }
     }
@@ -143,7 +154,7 @@ impl Plugin for Synth {
             category: Category::Synth,
             inputs: 2,
             outputs: 2,
-            parameters: 11,
+            parameters: 12,
             initial_delay: 0,
             version: 300,
             ..Info::default()
@@ -163,6 +174,7 @@ impl Plugin for Synth {
             8 => (8192 + self.get_oscillator(2).get_pitch_bend()) as f32 / 16384.0,
             9 => (self.pan + 1.0) / 2.0,
             10 => self.attack as f32 / 10.0,
+            11 => self.decay as f32 / 10.0,
             _ => 0.0,
         }
     }
@@ -180,6 +192,7 @@ impl Plugin for Synth {
             8 => self.set_pitch_bend(2, value),
             9 => self.pan = 2.0 * value - 1.0,
             10 => self.attack = (10.0 * value) as f64,
+            11 => self.decay = (10.0 * value) as f64,
             _ => (),
         }
     }
@@ -197,6 +210,7 @@ impl Plugin for Synth {
             8 => "Osc 3 Pitch".to_string(),
             9 => "Pan".to_string(),
             10 => "Attack".to_string(),
+            11 => "Decay".to_string(),
             _ => "".to_string(),
         }
     }
@@ -214,6 +228,7 @@ impl Plugin for Synth {
             8 => format!("{}", self.get_oscillator(2).get_pitch_bend()),
             9 => self.get_pan_text(),
             10 => format!("{}ms", (self.attack * 1000.0) as u16),
+            11 => format!("{}ms", (self.decay * 1000.0) as u16),
             _ => "".to_string(),
         }
     }
@@ -251,6 +266,7 @@ impl Plugin for Synth {
                 *output_sample = self.get_wave_value(*output_sample, time);
                 *output_sample = self.pan(*output_sample, left_channel);
                 *output_sample = self.apply_attack(*output_sample, time);
+                *output_sample = self.apply_decay(*output_sample, time);
                 time += per_sample;
             }
             left_channel = false;
