@@ -93,6 +93,7 @@ impl Synth {
             for current_note in &self.notes {
                 sample += oscillator.get_wave_value(time, current_note.get_pitch()) * oscillator.get_volume();
                 sample = sample * (1.0 / self.oscillators.len() as f32);
+                sample = sample * (current_note.get_velocity() as f32 / 100.0);
             }
         }
         sample
