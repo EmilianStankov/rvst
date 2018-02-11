@@ -129,4 +129,12 @@ mod tests {
         assert_eq!(round_sine(441.0/1760.0, A4, 0), 1.0);
         assert_eq!(round_sine(443.0/1760.0, A4, 0), -1.0);
     }
+
+    #[test]
+    fn test_pitch_bend() {
+        assert_eq!((sine_wave(441.0/1760.0, A4, 8192) * 10.0).round() / 10.0, 0.0);
+        assert_eq!((sine_wave(441.0/1760.0, A4, 4096) * 10.0).round() / 10.0, -0.5);
+        assert_eq!((sine_wave(441.0/1760.0, A4, 1024) * 10.0).round() / 10.0, 1.0);
+        assert_eq!((sine_wave(441.0/1760.0, A4, -2048) * 10.0).round() / 10.0, -1.0);
+    }
 }
