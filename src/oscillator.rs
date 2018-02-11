@@ -69,3 +69,63 @@ impl Default for Oscillator {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use oscillator::Oscillator;
+    #[test]
+    fn test_default_oscillator() {
+        let osc: Oscillator = Oscillator::default();
+        assert_eq!(osc.get_wave_type(), 0);
+        assert_eq!(osc.get_wave_type_text(), "Sine".to_string());
+        assert_eq!(osc.get_volume(), 1.0);
+        assert_eq!(osc.get_pitch_bend(), 0);
+    }
+
+    #[test]
+    fn test_oscillator_wave_types() {
+        let mut osc: Oscillator = Oscillator::default();
+
+        osc.set_wave_type(0.15);
+        assert_eq!(osc.get_wave_type(), 1);
+        assert_eq!(osc.get_wave_type_text(), "Saw".to_string());
+
+        osc.set_wave_type(0.30);
+        assert_eq!(osc.get_wave_type(), 2);
+        assert_eq!(osc.get_wave_type_text(), "Reversed Saw".to_string());
+
+        osc.set_wave_type(0.45);
+        assert_eq!(osc.get_wave_type(), 3);
+        assert_eq!(osc.get_wave_type_text(), "Square".to_string());
+
+        osc.set_wave_type(0.60);
+        assert_eq!(osc.get_wave_type(), 4);
+        assert_eq!(osc.get_wave_type_text(), "Triangle".to_string());
+
+        osc.set_wave_type(0.75);
+        assert_eq!(osc.get_wave_type(), 5);
+        assert_eq!(osc.get_wave_type_text(), "Sine Rounded".to_string());
+
+        osc.set_wave_type(0.90);
+        assert_eq!(osc.get_wave_type(), 6);
+        assert_eq!(osc.get_wave_type_text(), "Noise".to_string());
+
+        osc.set_wave_type(1.0);
+        assert_eq!(osc.get_wave_type(), 7);
+        assert_eq!(osc.get_wave_type_text(), "Sine".to_string());
+    }
+
+    #[test]
+    fn test_volume() {
+        let mut osc: Oscillator = Oscillator::default();
+        osc.set_volume(0.5);
+        assert_eq!(osc.get_volume(), 0.5);
+    }
+
+    #[test]
+    fn test_pitch_bend() {
+        let mut osc: Oscillator = Oscillator::default();
+        osc.set_pitch_bend(4096);
+        assert_eq!(osc.get_pitch_bend(), 4096);
+    }
+}
